@@ -3,6 +3,7 @@ use std::net::{ TcpListener, TcpStream };
 
 const PROXY_ADDR: &str = "127.0.0.1:8080";
 const SERVER_ADDR: &str = "127.0.0.1:9090";
+const MAX_SIZE_BUFF: usize = 1024;
 
 fn main() {
     let mut server_stream = TcpStream::connect(SERVER_ADDR).expect("Failed to connect to server");
@@ -11,7 +12,7 @@ fn main() {
     for cli_stream in cli_listener.incoming() {
         match cli_stream {
             Ok(mut cli_stream) => {
-                let mut buffer = [0u8, 128];
+                let mut buffer = [0u8; MAX_SIZE_BUFF];
                 let bytes_received = match cli_stream.read(&mut buffer) {
                     Ok(bytes_received) => bytes_received,
                     Err(err) => {
@@ -23,7 +24,7 @@ fn main() {
                 let cli_data_received = &buffer[..bytes_received];
                 match server_stream.write_all(&cli_data_received) {
                     Ok(_) => {
-                        let mut buffer = [0u8, 128];
+                        let mut buffer = [0u8; MAX_SIZE_BUFF];
                         let bytes_received = match server_stream.read(&mut buffer) {
                             Ok(bytes_received) => bytes_received,
                             Err(err) => {

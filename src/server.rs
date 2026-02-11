@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::io::{ Read, Write };
 use std::net::TcpListener;
 
 const SERVER_ADDR: &str = "127.0.0.1:9090"; 
@@ -8,17 +8,18 @@ fn main() {
      for stream in listener.incoming() {
          match stream {
              Ok(mut stream) => {
-                let mut buffer = [0u8, 128];
+                let mut buffer = [0u8; 1024];
                 loop {
                     let bytes_received = match stream.read(&mut buffer) {
                         Ok(bytes_received) => bytes_received,
                         Err(err) => {
-                            println!("Error while reading from client: {err:?}");
+                            println!("Error while reading from proxy: {err:?}");
                             break;
                         }
                     };
                     let data_received = &buffer[..bytes_received];
                     println!("R:{data_received:?}");
+                    let _ = stream.write_all(&mut buffer);
                 }
              },
              Err(err) => println!("Error: {err:?}"),
