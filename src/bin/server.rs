@@ -8,10 +8,14 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
+                println!("Proxy connected...");
                 let mut buffer = [0u8; 1024];
                 loop {
                     let bytes_received = match stream.read(&mut buffer) {
-                        Ok(0) => panic!("Proxy ended connection"),
+                        Ok(0) => {
+                            println!("Proxy ended connection");
+                            break;
+                        }
                         Ok(bytes_received) => bytes_received,
                         Err(err) => {
                             println!("Error while reading from proxy: {err:?}");
