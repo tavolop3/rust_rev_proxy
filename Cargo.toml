@@ -2,5 +2,14 @@
 name = "rev_proxy"
 version = "0.1.0"
 edition = "2024"
+default-run = "proxy"
+
+[[bin]]
+name = "proxy"
+path = "src/main.rs"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
 
 [dependencies]
