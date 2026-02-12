@@ -64,7 +64,7 @@ fn handle_cli_connection(cli_stream: TcpStream) {
         // write cli data to server only if cli data was sent
         if bytes_received > 0 {
             conn_data.cli_to_serv_buff = temp_read_arr[..bytes_received].to_vec();
-            if let Err(e) = conn_data.serv_stream.write_all(&conn_data.cli_to_serv_buff) {
+            if let Err(e) = conn_data.serv_stream.write(&conn_data.cli_to_serv_buff) {
                 println!("Error while sending client data to the server: {e:?}");
                 break;
             }
@@ -84,7 +84,7 @@ fn handle_cli_connection(cli_stream: TcpStream) {
         // write server data to cli only if server sent data
         if bytes_received > 0 {
             conn_data.serv_to_cli_buff = temp_read_arr[..bytes_received].to_vec();
-            if let Err(err) = conn_data.cli_stream.write_all(&conn_data.serv_to_cli_buff) {
+            if let Err(err) = conn_data.cli_stream.write(&conn_data.serv_to_cli_buff) {
                 println!("Error while sending server data to the client: {err:?}");
                 break;
             };
