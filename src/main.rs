@@ -1,6 +1,6 @@
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
-// use std::thread;
+use std::thread;
 
 const PROXY_ADDR: &str = "127.0.0.1:8080";
 const SERVER_ADDR: &str = "127.0.0.1:9090";
@@ -20,7 +20,10 @@ fn main() {
             println!("Connection with client failed");
             continue;
         };
-        handle_cli_connection(cli_stream);
+        println!("New client connected...");
+        thread::spawn(move || {
+            handle_cli_connection(cli_stream);
+        });
     }
 }
 
