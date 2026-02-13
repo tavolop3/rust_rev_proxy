@@ -42,7 +42,7 @@ fn handle_cli_connection(mut cli_stream: TcpStream) {
         // Offset represents where unsent data starts in the buffer
 
         // cli data -> server
-        if cli_offset != BUFFER_SIZE {
+        if cli_offset != cli_data_len {
             match serv_stream.write(&cli_buffer[cli_offset..cli_data_len]) {
                 Ok(n) => {
                     cli_offset += n;
