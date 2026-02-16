@@ -19,6 +19,15 @@ impl ProxyBuffer {
         self.data_len == BUFFER_SIZE
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.data_len == 0
+    }
+
+    pub fn clear(&mut self) {
+        self.offset = 0;
+        self.data_len = 0;
+    }
+
     pub fn get_unsent(&mut self) -> &mut [u8] {
         &mut self.buffer[self.offset..self.data_len]
     }
@@ -30,8 +39,7 @@ impl ProxyBuffer {
     pub fn advance_offset(&mut self, n: usize) {
         self.offset += n;
         if self.offset == self.data_len {
-            self.offset = 0;
-            self.data_len = 0;
+            self.clear();
         }
     }
 
