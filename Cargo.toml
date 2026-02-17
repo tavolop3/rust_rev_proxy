@@ -13,3 +13,4 @@ name = "server"
 path = "src/bin/server.rs"
 
 [dependencies]
+tokio = { version = "1.49.0", features = ["full"] }
