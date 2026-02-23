@@ -1,45 +1,57 @@
 mod load_balancer;
 
 use std::io::Error;
-use std::sync::Arc;
+use std::net::SocketAddr;
+use std::sync::{Arc, atomic::AtomicUsize};
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::try_join;
 
-use load_balancer::{LeastConnectionsBalancer, LoadBalanceStrategy};
+use load_balancer::{Balancer, ServerConnections};
 
 const PROXY_ADDR: &str = "0.0.0.0:8080";
 const MAX_SIZE_BUFF: usize = 8192; // 8 KB
 
 #[tokio::main]
 async fn main() {
-    let servers = vec![
+    let raw_servers = vec![
         "0.0.0.0:9090".to_string(),
         "0.0.0.0:9091".to_string(),
         "0.0.0.0:9092".to_string(),
     ]; // TODO: Config file
-    let balancer: Arc<dyn LoadBalanceStrategy> = Arc::new(LeastConnectionsBalancer::new(servers));
+    let mut servers = Vec::new();
+
+    // Process each server address to a socket at startup to avoid doing it in every connection
+    // inside tasks
+    for s in raw_servers {
+        let addr: SocketAddr = s.parse().expect("Invalid IP address in config");
+        servers.push(ServerConnections {
+            addr,
+            active_conns: AtomicUsize::new(0),
+        });
+    }
+    let balancer = Arc::new(Balancer::LeastConnections { servers });
+
     let cli_listener = TcpListener::bind(PROXY_ADDR).await.unwrap();
+
+    println!("Reverse Proxy listening on {}...", PROXY_ADDR);
 
     loop {
         // The second item contains the IP and port of the new connection.
         let (cli_stream, _) = cli_listener.accept().await.unwrap();
-        let balancer = balancer.clone();
+        let balancer_clone = Arc::clone(&balancer);
 
         // A new task is spawned for each inbound socket. The socket is
         // moved to the new task and processed there.
         tokio::spawn(async move {
             // TODO: handle errors
-            let _ = handle_connection(cli_stream, balancer).await;
+            let _ = handle_connection(cli_stream, balancer_clone).await;
         });
     }
 }
 
-async fn handle_connection(
-    mut cli: TcpStream,
-    balancer: Arc<dyn LoadBalanceStrategy>,
-) -> io::Result<()> {
-    let srv_addr = balancer
+async fn handle_connection(mut cli: TcpStream, balancer: Arc<Balancer>) -> io::Result<()> {
+    let (srv_addr, srv_index) = balancer
         .next()
         .ok_or_else(|| Error::other("No servers available"))?;
     let mut srv = TcpStream::connect(srv_addr).await?;
@@ -77,5 +89,8 @@ async fn handle_connection(
     };
 
     try_join!(c2s, s2c)?;
+
+    balancer.release(srv_index);
+
     Ok(())
 }
