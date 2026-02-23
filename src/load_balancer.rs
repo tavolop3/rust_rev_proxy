@@ -1,5 +1,6 @@
 use std::{
     net::SocketAddr,
+    sync::Arc,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
@@ -54,5 +55,17 @@ impl Balancer {
         if let Balancer::LeastConnections { servers } = self {
             servers[index].active_conns.fetch_sub(1, Ordering::Relaxed);
         }
+    }
+}
+
+pub struct ConnectionGuard {
+    pub balancer: Arc<Balancer>,
+    pub server_index: usize,
+}
+
+// this ensures that if connection is closed then it correctly handles it for the load balancer
+impl Drop for ConnectionGuard {
+    fn drop(&mut self) {
+        self.balancer.release(self.server_index);
     }
 }

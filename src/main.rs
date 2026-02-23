@@ -9,6 +9,8 @@ use tokio::try_join;
 
 use load_balancer::{Balancer, ServerConnections};
 
+use crate::load_balancer::ConnectionGuard;
+
 const PROXY_ADDR: &str = "0.0.0.0:8080";
 const MAX_SIZE_BUFF: usize = 8192; // 8 KB
 
@@ -54,6 +56,10 @@ async fn handle_connection(mut cli: TcpStream, balancer: Arc<Balancer>) -> io::R
     let (srv_addr, srv_index) = balancer
         .next()
         .ok_or_else(|| Error::other("No servers available"))?;
+    let _guard = ConnectionGuard {
+        balancer: Arc::clone(&balancer),
+        server_index: srv_index,
+    };
     let mut srv = TcpStream::connect(srv_addr).await?;
 
     let (mut cli_r, mut cli_w) = cli.split();
@@ -89,8 +95,6 @@ async fn handle_connection(mut cli: TcpStream, balancer: Arc<Balancer>) -> io::R
     };
 
     try_join!(c2s, s2c)?;
-
-    balancer.release(srv_index);
 
     Ok(())
 }
