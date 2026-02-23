@@ -21,6 +21,7 @@ The architecture is fully asynchronous and built on Tokio’s non-blocking runti
 * Improve error handling
 * Graceful shutdown handling
 * Add more load balancing strategies (random, hash-based, weighted RR)
+* Benchmarks
 * Add rate limiting
 * Implement circuit breaker
 * Add metrics and structured logging
