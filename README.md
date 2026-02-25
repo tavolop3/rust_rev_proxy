@@ -17,7 +17,7 @@ The architecture is fully asynchronous and built on Tokio’s non-blocking runti
 
 ## Future Improvements
 
-* Fix thundering herd issue (e.g., P2C strategy)
+* ~~Fix thundering herd issue (e.g., P2C strategy)~~
 * Improve error handling
 * Graceful shutdown handling
 * Add more load balancing strategies (random, hash-based, weighted RR)

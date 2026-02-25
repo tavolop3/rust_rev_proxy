@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-// use rand::RngExt;
+use rand::RngExt;
 
 // Enum to save pointer indirection of dynamic dispatch
 // generics are not (can't decide on runtime with config)
@@ -19,9 +19,9 @@ pub enum Balancer {
     LeastConnections {
         servers: Vec<ServerConnections>,
     },
-    // PowerOfTwoChoices {
-    //     servers: Vec<ServerConnections>,
-    // },
+    PowerOfTwoChoices {
+        servers: Vec<ServerConnections>,
+    },
 }
 
 // TODO: see repr(align(64)) to avoid false sharing (also drawbacks with cache contention)
@@ -78,26 +78,33 @@ impl Balancer {
                         },
                     )
                 }),
-            // Balancer::PowerOfTwoChoices { servers } => {
-            //     let len = servers.len();
-            //     if len == 0 {
-            //         return None;
-            //     }
-            //
-            //     let mut rng = rand::rng();
-            //     let i_c1 = rng.random_range(0..len);
-            //     let i_c2 = rng.random_range(0..len);
-            //     let s1 = &servers[i_c1];
-            //     let s2 = &servers[i_c2];
-            //
-            //     let n1 = s1.active_conns.load(Ordering::Relaxed);
-            //     let n2 = s2.active_conns.load(Ordering::Relaxed);
-            //
-            //     let win = if n1 < n2 { s1 } else { s2 };
-            //     win.active_conns.fetch_add(1, Ordering::Relaxed);
-            //
-            //     Some((win.addr,))
-            // }
+
+            Balancer::PowerOfTwoChoices { servers } => {
+                let len = servers.len();
+                if len == 0 {
+                    return None;
+                }
+
+                let mut rng = rand::rng();
+                let i_s1 = rng.random_range(0..len);
+                let i_s2 = rng.random_range(0..len);
+                let s1 = &servers[i_s1];
+                let s2 = &servers[i_s2];
+
+                let n1 = s1.active_conns.load(Ordering::Relaxed);
+                let n2 = s2.active_conns.load(Ordering::Relaxed);
+
+                let (win_s, win_i) = if n1 < n2 { (s1, i_s1) } else { (s2, i_s2) };
+                win_s.active_conns.fetch_add(1, Ordering::Relaxed);
+
+                Some((
+                    win_s.addr,
+                    ServerId {
+                        index: win_i,
+                        generation: win_s.generation,
+                    },
+                ))
+            }
         }
     }
 
