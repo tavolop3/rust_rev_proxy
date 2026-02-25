@@ -9,4 +9,5 @@ name = "proxy"
 path = "src/main.rs"
 
 [dependencies]
+rand = { version = "0.10.0", features = ["thread_rng"] }
 tokio = { version = "1.49.0", features = ["full"] }
