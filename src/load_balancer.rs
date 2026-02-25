@@ -24,7 +24,9 @@ pub enum Balancer {
     },
 }
 
-// TODO: see repr(align(64)) to avoid false sharing (also drawbacks with cache contention)
+// align(64) to avoid false sharing (performance gain when benchmarked), more ram, less cpu
+#[cfg_attr(target_arch = "x86_64", repr(align(64)))]
+#[cfg_attr(any(target_arch = "aarch64", target_arch = "arm"), repr(align(128)))]
 pub struct ServerConnections {
     pub addr: SocketAddr,
     pub active_conns: AtomicUsize,
