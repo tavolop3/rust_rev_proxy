@@ -40,16 +40,20 @@ async fn main() {
     println!("Reverse Proxy listening on {}...", PROXY_ADDR);
 
     loop {
-        // The second item contains the IP and port of the new connection.
-        let (cli_stream, _) = cli_listener.accept().await.unwrap();
-        let balancer_clone = Arc::clone(&balancer);
+        match cli_listener.accept().await {
+            Ok((cli_stream, _)) => {
+                let balancer_clone = Arc::clone(&balancer);
 
-        // A new task is spawned for each inbound socket. The socket is
-        // moved to the new task and processed there.
-        tokio::spawn(async move {
-            // TODO: handle errors
-            let _ = handle_connection(cli_stream, balancer_clone).await;
-        });
+                tokio::spawn(async move {
+                    if let Err(e) = handle_connection(cli_stream, balancer_clone).await {
+                        eprint!("Error handle_connection(): {}", e);
+                    }
+                });
+            }
+            Err(e) => {
+                eprintln!("Error cli_listener.accept(): {}", e);
+            }
+        }
     }
 }
 
