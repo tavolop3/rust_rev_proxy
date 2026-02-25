@@ -37,6 +37,8 @@ async fn main() {
 
     let cli_listener = TcpListener::bind(PROXY_ADDR).await.unwrap();
 
+    // Channel to notify shutdown
+
     println!("Reverse Proxy listening on {}...", PROXY_ADDR);
 
     loop {
