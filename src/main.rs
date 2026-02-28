@@ -68,6 +68,10 @@ async fn handle_connection(mut cli: TcpStream, balancer: Arc<Balancer>) -> io::R
     };
     let mut srv = TcpStream::connect(srv_addr).await?;
 
+    // Disables Nagle's algorithm to improve latency
+    cli.set_nodelay(true)?;
+    srv.set_nodelay(true)?;
+
     let (mut cli_r, mut cli_w) = cli.split();
     let (mut srv_r, mut srv_w) = srv.split();
 
