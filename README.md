@@ -19,12 +19,12 @@ The architecture is fully asynchronous and built on Tokio’s non-blocking runti
 
 * ~~Fix thundering herd issue (e.g., P2C strategy)~~
 * ~Improve error handling~
-* Graceful shutdown handling
 * Add more load balancing strategies (random, hash-based, weighted RR)
 * Benchmarks
 * Add rate limiting
 * Implement circuit breaker
 * Add metrics and structured logging
+* Graceful shutdown handling
 * Introduce connection queueing under high load
 * Add health checks
 * Support external config file (optional hot reload)
